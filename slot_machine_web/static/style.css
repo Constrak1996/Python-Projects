@@ -59,3 +59,219 @@ button {
     font-size: 18px;
     margin-right: 10px;
 }
+
+body {
+    background: radial-gradient(circle at center, #1a1a1a, #000);
+    color: white;
+    font-family: 'Trebuchet MS', sans-serif;
+    text-align: center;
+    padding-top: 50px;
+}
+
+/* Casino Frame */
+.casino-frame {
+    width: 360px;
+    margin: 0 auto 30px auto;
+    padding: 20px;
+    border-radius: 20px;
+    background: #111;
+    box-shadow: 0 0 25px red, 0 0 50px gold inset;
+    position: relative;
+}
+
+/* Animated Lights */
+.lights {
+    display: flex;
+    justify-content: space-between;
+    padding: 5px 0;
+}
+
+.lights::before,
+.lights::after {
+    content: "";
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    animation: blink 0.8s infinite alternate;
+}
+
+.top-lights::before { background: red; }
+.top-lights::after { background: gold; }
+
+.bottom-lights::before { background: gold; }
+.bottom-lights::after { background: red; }
+
+@keyframes blink {
+    from { opacity: 0.2; }
+    to { opacity: 1; }
+}
+
+/* Reels */
+.slot-machine {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin: 20px 0;
+}
+
+.reel {
+    width: 90px;
+    height: 90px;
+    background: #222;
+    border: 3px solid #ffcc00;
+    border-radius: 12px;
+    font-size: 55px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 0 15px gold;
+}
+
+.spin-animation {
+    animation: spin 0.1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: translateY(0); }
+    100% { transform: translateY(-25px); }
+}
+
+/* Controls */
+.controls {
+    margin-top: 20px;
+}
+
+#balance {
+    font-size: 24px;
+    margin-bottom: 10px;
+    text-shadow: 0 0 10px gold;
+}
+
+.betting input {
+    width: 80px;
+    padding: 10px;
+    font-size: 18px;
+    border-radius: 8px;
+    border: none;
+    margin-right: 10px;
+}
+
+button {
+    padding: 12px 40px;
+    font-size: 22px;
+    background: linear-gradient(to bottom, gold, orange);
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: bold;
+    color: #222;
+    box-shadow: 0 0 15px gold;
+    transition: 0.2s;
+}
+
+button:hover {
+    transform: scale(1.1);
+    box-shadow: 0 0 25px gold;
+}
+
+/* Fireworks container */
+#fireworks-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    overflow: hidden;
+    z-index: 9999;
+}
+
+/* Individual firework particle */
+.firework {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    background: radial-gradient(circle, yellow, red);
+    border-radius: 50%;
+    animation: explode 1s ease-out forwards;
+}
+
+@keyframes explode {
+    0% {
+        transform: translate(0, 0) scale(1);
+        opacity: 1;
+    }
+    100% {
+        transform: translate(var(--x), var(--y)) scale(0.2);
+        opacity: 0;
+    }
+}
+
+.casino-frame {
+    animation: neonPulse 2s infinite alternate;
+}
+
+@keyframes neonPulse {
+    0% {
+        box-shadow: 0 0 20px red, 0 0 40px gold inset;
+    }
+    100% {
+        box-shadow: 0 0 40px red, 0 0 80px gold inset;
+    }
+}
+
+.casino-frame::before {
+    content: "";
+    position: absolute;
+    top: -5px;
+    left: -5px;
+    right: -5px;
+    bottom: -5px;
+    border-radius: 25px;
+    background: conic-gradient(
+        red, orange, yellow, lime, cyan, blue, magenta, red
+    );
+    z-index: -1;
+    filter: blur(15px);
+    animation: spinLights 4s linear infinite;
+}
+
+@keyframes spinLights {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+#screen-flash {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: white;
+    opacity: 0;
+    pointer-events: none;
+    z-index: 9998;
+    transition: opacity 0.3s;
+}
+
+.flash-active {
+    opacity: 0.8;
+}
+
+#debugJackpot {
+    margin-left: 10px;
+    padding: 10px 20px;
+    font-size: 16px;
+    background: crimson;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    box-shadow: 0 0 10px red;
+}
+
+#debugJackpot:hover {
+    background: darkred;
+    transform: scale(1.05);
+}
+

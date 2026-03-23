@@ -7,21 +7,37 @@
 </head>
 <body>
 
-<div class="info">
+<!-- Casino frame with lights -->
+<div class="casino-frame">
+    <div class="lights top-lights"></div>
+
+    <!-- Reels -->
+    <div class="slot-machine">
+        <div class="reel" id="reel1">🍒</div>
+        <div class="reel" id="reel2">🍋</div>
+        <div class="reel" id="reel3">⭐</div>
+    </div>
+
+    <div class="lights bottom-lights"></div>
+</div>
+
+<!-- Betting + balance -->
+<div class="controls">
     <div id="balance">Balance: 100</div>
 
     <div class="betting">
         <input type="number" id="betAmount" min="1" value="10">
         <button id="spinButton">SPIN</button>
+        <button id="debugJackpot">DEBUG JACKPOT</button>
+
     </div>
 </div>
 
-<div class="slot-machine">
-    <div class="reel" id="reel1">🍒</div>
-    <div class="reel" id="reel2">🍋</div>
-    <div class="reel" id="reel3">⭐</div>
-</div>
+<!-- Jackpot effects -->
+<div id="screen-flash"></div>
+<div id="fireworks-container"></div>
 
+<!-- Script -->
 <script src="/static/script.js"></script>
 </body>
 </html>

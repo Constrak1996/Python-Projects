@@ -15,7 +15,7 @@ function spinReel(reel, duration) {
     setTimeout(() => {
         clearInterval(interval);
         reel.classList.remove("spin-animation");
-        reel.textContent = randomSymbol();
+        reel.textContent = randomSymbol(); // final symbol
     }, duration);
 }
 
@@ -27,6 +27,40 @@ function calculatePayout(a, b, c, bet) {
     if (a === b && b === c) return bet * 5;   // Jackpot
     if (a === b || b === c || a === c) return bet * 2; // Small win
     return 0;
+}
+
+function flashScreen() {
+    const flash = document.getElementById("screen-flash");
+    flash.classList.add("flash-active");
+    setTimeout(() => flash.classList.remove("flash-active"), 300);
+}
+
+
+function triggerFireworks() {
+    const container = document.getElementById("fireworks-container");
+
+    for (let i = 0; i < 30; i++) {
+        const firework = document.createElement("div");
+        firework.classList.add("firework");
+
+        // Random explosion direction
+        const angle = Math.random() * Math.PI * 2;
+        const distance = 150 + Math.random() * 150;
+
+        firework.style.setProperty("--x", `${Math.cos(angle) * distance}px`);
+        firework.style.setProperty("--y", `${Math.sin(angle) * distance}px`);
+
+        // Start from center of screen
+        firework.style.left = `${window.innerWidth / 2}px`;
+        firework.style.top = `${window.innerHeight / 2}px`;
+
+        container.appendChild(firework);
+
+        // Remove after animation
+        setTimeout(() => {
+            firework.remove();
+        }, 1000);
+    }
 }
 
 document.getElementById("spinButton").addEventListener("click", () => {
@@ -62,11 +96,37 @@ document.getElementById("spinButton").addEventListener("click", () => {
         balance += payout;
         updateBalance();
 
-        if (payout > 0) {
+        if (a === b && b === c) {
+            flashScreen();
+            triggerFireworks();
+            alert("🎉 JACKPOT! You won " + payout + " credits!");
+        }
+        else if (payout > 0) {
             alert("You won " + payout + " credits!");
-        } else {
-            console.log("No win this time.");
         }
 
     }, 2100);
 });
+
+document.getElementById("debugJackpot").addEventListener("click", () => {
+    const bet = parseInt(document.getElementById("betAmount").value);
+
+    // Force jackpot symbols
+    const r1 = document.getElementById("reel1");
+    const r2 = document.getElementById("reel2");
+    const r3 = document.getElementById("reel3");
+
+    r1.textContent = "⭐";
+    r2.textContent = "⭐";
+    r3.textContent = "⭐";
+
+    const payout = bet * 5;
+    balance += payout;
+    updateBalance();
+
+    flashScreen();
+    triggerFireworks();
+
+    alert("🎉 DEBUG JACKPOT! You won " + payout + " credits!");
+});
+
