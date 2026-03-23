@@ -23,7 +23,10 @@
 
 <!-- Betting + balance -->
 <div class="controls">
-    <div id="balance">Balance: 100</div>
+    <div id="balance">
+        Balance: <span id="balance-value">110</span>
+        <div id="win-float"></div>
+    </div>
 
     <div class="betting">
         <input type="number" id="betAmount" min="1" value="10">
@@ -36,6 +39,7 @@
 <!-- Jackpot effects -->
 <div id="screen-flash"></div>
 <div id="fireworks-container"></div>
+<div id="jackpot-banner">🎉 JACKPOT! 🎉</div>
 
 <!-- Script -->
 <script src="/static/script.js"></script>

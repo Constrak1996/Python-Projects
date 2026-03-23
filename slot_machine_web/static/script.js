@@ -20,7 +20,7 @@ function spinReel(reel, duration) {
 }
 
 function updateBalance() {
-    document.getElementById("balance").textContent = "Balance: " + balance;
+    document.getElementById("balance-value").textContent = balance;
 }
 
 function calculatePayout(a, b, c, bet) {
@@ -63,6 +63,28 @@ function triggerFireworks() {
     }
 }
 
+function showJackpotBanner() {
+    const banner = document.getElementById("jackpot-banner");
+    banner.style.display = "block";
+
+    setTimeout(() => {
+        banner.style.display = "none";
+    }, 2000);
+}
+
+function showWinFloat(amount) {
+    const float = document.getElementById("win-float");
+
+    float.textContent = `+${amount}`;
+    float.style.opacity = 1;
+    float.style.transform = "translateY(-20px)";
+
+    setTimeout(() => {
+        float.style.opacity = 0;
+        float.style.transform = "translateY(0px)";
+    }, 800);
+}
+
 document.getElementById("spinButton").addEventListener("click", () => {
     const bet = parseInt(document.getElementById("betAmount").value);
 
@@ -99,10 +121,10 @@ document.getElementById("spinButton").addEventListener("click", () => {
         if (a === b && b === c) {
             flashScreen();
             triggerFireworks();
-            alert("🎉 JACKPOT! You won " + payout + " credits!");
+            showJackpotBanner();
         }
         else if (payout > 0) {
-            alert("You won " + payout + " credits!");
+            showWinFloat(payout);
         }
 
     }, 2100);
@@ -126,7 +148,5 @@ document.getElementById("debugJackpot").addEventListener("click", () => {
 
     flashScreen();
     triggerFireworks();
-
-    alert("🎉 DEBUG JACKPOT! You won " + payout + " credits!");
+    showJackpotBanner();
 });
-
