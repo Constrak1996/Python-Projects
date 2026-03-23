@@ -43,3 +43,19 @@ button {
     cursor: pointer;
     font-weight: bold;
 }
+
+.info {
+    margin-bottom: 20px;
+    font-size: 22px;
+}
+
+.betting {
+    margin-top: 10px;
+}
+
+.betting input {
+    width: 80px;
+    padding: 8px;
+    font-size: 18px;
+    margin-right: 10px;
+}
