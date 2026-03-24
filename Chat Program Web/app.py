@@ -29,6 +29,7 @@ app = Flask(__name__)
 app.config["SECRET_KEY"] = "secret!"  # Required for Socket.IO sessions
 socketio = SocketIO(app)
 
+
 # ----------------------------------------
 # Data Structures
 # ----------------------------------------
@@ -330,6 +331,79 @@ def handle_delete(msg_id):
     save_history(history)
 
     emit("delete_message", msg_id, broadcast=True)
+
+@socketio.on("voice_join")
+def voice_join():
+    sid = request.sid
+    room = users[sid]["room"]
+
+    # Notify others to create connections
+    emit("voice_offer_request", {"from": sid}, room=room, include_self=False)
+
+
+@socketio.on("voice_offer")
+def voice_offer(data):
+    emit("voice_offer", {"from": request.sid, "offer": data["offer"]}, room=data["to"])
+
+
+@socketio.on("voice_answer")
+def voice_answer(data):
+    emit("voice_answer", {"from": request.sid, "answer": data["answer"]}, room=data["to"])
+
+
+@socketio.on("voice_ice")
+def voice_ice(data):
+    emit("voice_ice", {"from": request.sid, "candidate": data["candidate"]}, room=data["to"])
+
+voice_channels = {}  # { "General": set([sid1, sid2]) }
+@socketio.on("voice_join")
+def voice_join(data):
+    channel = data.get("channel")
+    sid = request.sid
+    if not channel:
+        return
+
+    # Add user to channel
+    voice_channels.setdefault(channel, set()).add(sid)
+
+    # Tell the new user who is already in the channel
+    others = [s for s in voice_channels[channel] if s != sid]
+    emit("voice_peers", {"peers": others}, room=sid)
+
+    # Optionally update UI list
+    usernames = [users[s]["username"] for s in voice_channels[channel] if s in users]
+    emit("voice_users", usernames, room=sid)
+    emit("voice_users", usernames, room=channel, include_self=False)
+
+@socketio.on("voice_leave")
+def voice_leave():
+    sid = request.sid
+    for channel, members in voice_channels.items():
+        if sid in members:
+            members.remove(sid)
+            usernames = [users[s]["username"] for s in members if s in users]
+            emit("voice_users", usernames, room=channel)
+            break
+
+@socketio.on("voice_offer")
+def voice_offer(data):
+    to = data.get("to")
+    offer = data.get("offer")
+    emit("voice_offer", {"from": request.sid, "offer": offer}, room=to)
+
+
+@socketio.on("voice_answer")
+def voice_answer(data):
+    to = data.get("to")
+    answer = data.get("answer")
+    emit("voice_answer", {"from": request.sid, "answer": answer}, room=to)
+
+
+@socketio.on("voice_ice")
+def voice_ice(data):
+    to = data.get("to")
+    candidate = data.get("candidate")
+    emit("voice_ice", {"from": request.sid, "candidate": candidate}, room=to)
 
 
 # ----------------------------------------

@@ -174,3 +174,121 @@ body {
     background: rgba(255, 255, 255, 0.05);
     border: 1px dashed #666;
 }
+
+#voice-channels {
+    background: #181818;
+    padding: 8px;
+    border-radius: 6px;
+    border: 1px solid #2a2a2a;
+}
+
+.voice-channel {
+    padding: 6px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    color: #ccc;
+    font-size: 14px;
+}
+
+.voice-channel:hover {
+    background: #252525;
+}
+
+.voice-channel.active {
+    background: #3a3a3a;
+    color: #6cf;
+}
+
+/* Voice panel in main area */
+#voice-panel {
+    background: #151515;
+    border-bottom: 1px solid #333;
+    padding: 8px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+#voice-header {
+    font-size: 14px;
+    color: #aaa;
+}
+
+#voice-users {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.voice-user {
+    padding: 4px 8px;
+    border-radius: 12px;
+    background: #222;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.voice-user.speaking {
+    background: #355c2b;
+    box-shadow: 0 0 6px rgba(0,255,0,0.4);
+}
+
+#voice-controls {
+    display: flex;
+    gap: 6px;
+}
+
+#voice-controls button {
+    padding: 4px 10px;
+    font-size: 13px;
+    background: #333;
+    color: #eee;
+    border: 1px solid #444;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+#voice-controls button:hover {
+    background: #444;
+}
+
+.voice-channel {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    color: #ccc;
+    font-size: 14px;
+}
+
+.voice-channel:hover {
+    background: #252525;
+}
+
+.voice-channel.active {
+    background: #3a3a3a;
+    color: #6cf;
+}
+
+.voice-controls {
+    display: flex;
+    gap: 4px;
+}
+
+.voice-controls button {
+    padding: 2px 6px;
+    font-size: 12px;
+    background: #333;
+    color: #eee;
+    border: 1px solid #444;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.voice-controls button:hover {
+    background: #444;
+}
