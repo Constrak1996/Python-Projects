@@ -1,9 +1,26 @@
 import json
 import os
+import json
+import os
+
+from cryptography.fernet import Fernet
 from flask import Flask, render_template, request
 from flask_socketio import SocketIO, join_room, leave_room, emit
 from datetime import datetime
 
+# ----------------------------------------
+# Encryption Setup
+# ----------------------------------------
+
+HISTORY_FILE = "chat_history.json"
+KEY_FILE = "secret.key"
+
+def load_key():
+    with open(KEY_FILE, "r", encoding="utf-8") as f:
+        return f.read().encode()
+
+# Create Fernet instance used for encrypt/decrypt
+fernet = Fernet(load_key())
 
 # ----------------------------------------
 # Flask + Socket.IO Setup
@@ -113,25 +130,44 @@ HISTORY_FILE = "chat_history.json"
 
 
 def load_history():
-    """Load chat history from JSON file."""
+    """Load and decrypt chat history from JSON file."""
     if not os.path.exists(HISTORY_FILE):
         return {}
 
     with open(HISTORY_FILE, "r", encoding="utf-8") as f:
         try:
-            return json.load(f)
+            encrypted = json.load(f)
         except json.JSONDecodeError:
             return {}
 
+    history = {}
+    for room, messages in encrypted.items():
+        decrypted_msgs = []
+        for token in messages:
+            try:
+                decrypted = fernet.decrypt(token.encode()).decode()
+                decrypted_msgs.append(decrypted)
+            except Exception:
+                continue
+        history[room] = decrypted_msgs
+
+    return history
 
 def save_history(history):
-    """Save chat history to JSON file."""
+    """Encrypt and save chat history to JSON file."""
+    encrypted = {}
+    for room, messages in history.items():
+        encrypted[room] = [
+            fernet.encrypt(m.encode()).decode()
+            for m in messages
+        ]
+
     with open(HISTORY_FILE, "w", encoding="utf-8") as f:
-        json.dump(history, f, indent=4)
+        json.dump(encrypted, f, indent=4)
 
 
 def add_message_to_history(room, message):
-    """Append a message to a room's history."""
+    """Append a message to a room's history (encrypted on save)."""
     history = load_history()
     history.setdefault(room, [])
     history[room].append(message)
@@ -139,9 +175,10 @@ def add_message_to_history(room, message):
 
 
 def get_room_history(room):
-    """Return the message list for a room."""
+    """Return decrypted message list for a room."""
     history = load_history()
     return history.get(room, [])
+
 
 
 # ----------------------------------------
