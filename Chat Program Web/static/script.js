@@ -6,6 +6,62 @@ document.addEventListener("contextmenu", e => {
 const socket = io();
     let username = null;
 
+    document.addEventListener("paste", event => {
+        const items = event.clipboardData.items;
+
+        for (let item of items) {
+            if (item.type.startsWith("image/")) {
+                const file = item.getAsFile();
+                const reader = new FileReader();
+
+                reader.onload = () => {
+                    socket.emit("image", reader.result); // Base64 string
+                };
+
+                reader.readAsDataURL(file);
+            }
+        }
+    });
+
+    const chatBox = document.getElementById("chat");
+
+    // Prevent browser from opening the file
+    ["dragenter", "dragover", "dragleave", "drop"].forEach(eventName => {
+        chatBox.addEventListener(eventName, e => {
+            e.preventDefault();
+            e.stopPropagation();
+        });
+    });
+
+    // Highlight drop zone (optional)
+    chatBox.addEventListener("dragover", () => {
+        chatBox.classList.add("drag-hover");
+    });
+
+    chatBox.addEventListener("dragleave", () => {
+        chatBox.classList.remove("drag-hover");
+    });
+
+    // Handle dropped files
+    chatBox.addEventListener("drop", e => {
+        chatBox.classList.remove("drag-hover");
+
+        const files = e.dataTransfer.files;
+        if (!files || files.length === 0) return;
+
+        for (let file of files) {
+            if (file.type.startsWith("image/")) {
+                const reader = new FileReader();
+
+                reader.onload = () => {
+                    socket.emit("image", reader.result); // Base64
+                };
+
+                reader.readAsDataURL(file);
+            }
+        }
+    });
+
     function addLine(text, cls="") {
         const chat = document.getElementById("chat");
         const div = document.createElement("div");
@@ -56,6 +112,19 @@ const socket = io();
         chat.appendChild(div);
         chat.scrollTop = chat.scrollHeight;
     });
+
+    socket.on("image", data => {
+        const chat = document.getElementById("chat");
+
+        const div = document.createElement("div");
+        div.classList.add("message");
+
+        div.innerHTML = `<img src="${data}" style="max-width: 300px; border-radius: 6px;">`;
+
+        chat.appendChild(div);
+        chat.scrollTop = chat.scrollHeight;
+    });
+
 
     socket.on("system_message", text => addLine(text, "system"));
 
@@ -122,14 +191,18 @@ const socket = io();
     }
 
     socket.on("history", messages => {
-        const chat = document.getElementById("chat");
-        chat.innerHTML = "";
+    const chat = document.getElementById("chat");
+    chat.innerHTML = "";
 
-        messages.forEach(msg => {
-            const div = document.createElement("div");
-            div.dataset.id = msg.id;
-            div.classList.add("message");
+    messages.forEach(msg => {
+        const div = document.createElement("div");
+        div.dataset.id = msg.id;
+        div.classList.add("message");
 
+        if (msg.text.startsWith("[IMAGE]")) {
+            const base64 = msg.text.replace("[IMAGE]", "");
+            div.innerHTML = `<img src="${base64}" style="max-width: 300px; border-radius: 6px;">`;
+        } else {
             const name = msg.username;
             const color = colorForName(name);
 
@@ -139,11 +212,14 @@ const socket = io();
             );
 
             div.innerHTML = coloredText;
+            }
+
             chat.appendChild(div);
         });
 
         chat.scrollTop = chat.scrollHeight;
     });
+
 
     socket.on("edit_message", data => {
         const msg = document.querySelector(`div[data-id="${data.id}"]`);

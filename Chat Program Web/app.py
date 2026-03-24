@@ -358,6 +358,23 @@ def handle_stop_typing():
     room = user["room"]
     emit("stop_typing", user["username"], room=room, include_self=False)
 
+@socketio.on("image")
+def handle_image(data):
+    sid = request.sid
+    user = users[sid]
+    room = user["room"]
+
+    # Store in history as a message object
+    msg = {
+        "id": str(uuid.uuid4()),
+        "text": f"[IMAGE]{data}",
+        "username": user["username"]
+    }
+
+    add_message_to_history(room, msg)
+
+    emit("image", data, room=room)
+
 
 # ----------------------------------------
 # Server Startup
