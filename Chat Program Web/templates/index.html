@@ -19,42 +19,38 @@
 
         <h3>Voice</h3>
         <div id="voice-channels">
+
             <div class="voice-channel" data-channel="General">
-                🔊 General
-                <div class="voice-controls">
-                    <button class="vc-join">Join</button>
-                    <button class="vc-leave" style="display:none;">Leave</button>
-                    <button class="vc-mute">Mute</button>
+                <div class="vc-header">
+                    🔊 General
+                    <div class="vc-controls">
+                        <button class="vc-join">Join</button>
+                        <button class="vc-leave" style="display:none;">Leave</button>
+                        <button class="vc-mute">Mute</button>
+                    </div>
                 </div>
+
+                <div class="vc-users"></div>
             </div>
+
 
             <div class="voice-channel" data-channel="Gaming">
-                🎮 Gaming
-                <div class="voice-controls">
-                    <button class="vc-join">Join</button>
-                    <button class="vc-leave" style="display:none;">Leave</button>
-                    <button class="vc-mute">Mute</button>
+                <div class="vc-header">
+                    🎮 Gaming
+                    <div class="vc-controls">
+                        <button class="vc-join">Join</button>
+                        <button class="vc-leave" style="display:none;">Leave</button>
+                        <button class="vc-mute">Mute</button>
+                    </div>
                 </div>
+
+                <div class="vc-users"></div>
             </div>
         </div>
-
     </div>
 
     <div id="main">
-        <div id="voice-panel">
-            <div id="voice-header">
-                <span id="voice-channel-name">Not in a voice channel</span>
-            </div>
-            <div id="voice-users"></div>
-            <div id="voice-controls">
-                <button id="voice-join">Join</button>
-                <button id="voice-leave" style="display:none;">Leave</button>
-                <button id="voice-mute">Mute</button>
-            </div>
-        </div>
-
         <div id="chat"></div>
-
         <div id="input-area">
             <input id="message" type="text" placeholder="Type a message or command...">
             <button id="send">Send</button>

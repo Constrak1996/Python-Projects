@@ -331,17 +331,15 @@ document.getElementById("message").addEventListener("contextmenu", event => {
 //  VOICE CHANNEL UI + CONTROLS
 // ===============================
 
-document.querySelectorAll(".voice-channel").forEach(channelElement => {
-    const channelName = channelElement.dataset.channel;
+document.querySelectorAll(".voice-channel").forEach(channelEl => {
+    const channelName = channelEl.dataset.channel;
 
-    const joinButton = channelElement.querySelector(".vc-join");
-    const leaveButton = channelElement.querySelector(".vc-leave");
-    const muteButton = channelElement.querySelector(".vc-mute");
+    const joinBtn = channelEl.querySelector(".vc-join");
+    const leaveBtn = channelEl.querySelector(".vc-leave");
+    const muteBtn = channelEl.querySelector(".vc-mute");
 
-    // Join voice channel
-    joinButton.addEventListener("click", async event => {
-        event.stopPropagation();
-
+    joinBtn.addEventListener("click", async e => {
+        e.stopPropagation();
         currentVoiceChannel = channelName;
 
         if (!localStream) {
@@ -352,42 +350,28 @@ document.querySelectorAll(".voice-channel").forEach(channelElement => {
 
         socket.emit("voice_join", { channel: channelName });
 
-        joinButton.style.display = "none";
-        leaveButton.style.display = "inline-block";
+        joinBtn.style.display = "none";
+        leaveBtn.style.display = "inline-block";
     });
 
-    // Leave voice channel
-    leaveButton.addEventListener("click", event => {
-        event.stopPropagation();
-
+    leaveBtn.addEventListener("click", e => {
+        e.stopPropagation();
         socket.emit("voice_leave");
 
-        for (let peerId in peers) {
-            peers[peerId].close();
-        }
-        peers = {};
-
-        if (localStream) {
-            localStream.getTracks().forEach(track => track.stop());
-            localStream = null;
-        }
-
-        joinButton.style.display = "inline-block";
-        leaveButton.style.display = "none";
+        joinBtn.style.display = "inline-block";
+        leaveBtn.style.display = "none";
     });
 
-    // Mute / unmute microphone
-    muteButton.addEventListener("click", event => {
-        event.stopPropagation();
-
+    muteBtn.addEventListener("click", e => {
+        e.stopPropagation();
         if (!localStream) return;
 
-        const audioTrack = localStream.getAudioTracks()[0];
-        audioTrack.enabled = !audioTrack.enabled;
-
-        muteButton.textContent = audioTrack.enabled ? "Mute" : "Unmute";
+        const track = localStream.getAudioTracks()[0];
+        track.enabled = !track.enabled;
+        muteBtn.textContent = track.enabled ? "Mute" : "Unmute";
     });
 });
+
 
 
 // ===============================
@@ -522,15 +506,22 @@ muteButton.addEventListener("click", () => {
 // ===============================
 
 // Update list of users in voice channel
-socket.on("voice_users", users => {
-    voiceUsersElement.innerHTML = "";
-    users.forEach(user => {
-        const userElement = document.createElement("div");
-        userElement.classList.add("voice-user");
-        userElement.textContent = user;
-        voiceUsersElement.appendChild(userElement);
+socket.on("voice_users", ({ channel, users }) => {
+    const channelEl = document.querySelector(`.voice-channel[data-channel="${channel}"]`);
+    if (!channelEl) return;
+
+    const usersEl = channelEl.querySelector(".vc-users");
+    usersEl.innerHTML = "";
+
+    users.forEach(u => {
+        const div = document.createElement("div");
+        div.classList.add("vc-user");
+        div.textContent = u;
+        usersEl.appendChild(div);
     });
 });
+
+
 
 // Someone is speaking indicator
 socket.on("voice_speaking", username => {
