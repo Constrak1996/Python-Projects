@@ -1,3 +1,8 @@
+document.addEventListener("contextmenu", e => {
+    // Block default right-click everywhere
+    e.preventDefault();
+}, true);
+
 const socket = io();
     let username = null;
 
@@ -140,31 +145,6 @@ const socket = io();
         chat.scrollTop = chat.scrollHeight;
     });
 
-
-    document.getElementById("chat").addEventListener("contextmenu", e => {
-        e.preventDefault();
-
-        const msg = e.target.closest("div[data-id]");
-        if (!msg) return;
-
-        const id = msg.dataset.id;
-
-        const choice = prompt("Type 'edit' to edit or 'delete' to delete this message:");
-
-        if (choice === "edit") {
-            const newText = prompt("New message text:", msg.innerText);
-            if (newText) {
-                socket.emit("edit_message", { id, text: newText });
-            }
-        }
-
-        if (choice === "delete") {
-            if (confirm("Delete this message?")) {
-                socket.emit("delete_message", id);
-            }
-        }
-    });
-
     socket.on("edit_message", data => {
         const msg = document.querySelector(`div[data-id="${data.id}"]`);
         if (msg) msg.innerHTML = data.text;
@@ -174,6 +154,60 @@ const socket = io();
         const msg = document.querySelector(`div[data-id="${id}"]`);
         if (msg) msg.remove();
     });
+
+    const contextMenu = document.getElementById("context-menu");
+let contextTargetId = null;
+
+// Open context menu on right-click
+document.getElementById("chat").addEventListener("contextmenu", e => {
+    e.preventDefault();
+
+    const msg = e.target.closest("div[data-id]");
+    if (!msg) return;
+
+    contextTargetId = msg.dataset.id;
+
+    contextMenu.style.top = e.pageY + "px";
+    contextMenu.style.left = e.pageX + "px";
+
+    contextMenu.classList.add("visible");
+});
+
+// Close menu when clicking anywhere else
+document.addEventListener("click", () => {
+    contextMenu.classList.remove("visible");
+});
+
+// Handle menu actions
+contextMenu.addEventListener("click", e => {
+    const action = e.target.dataset.action;
+    if (!action) return;
+
+    if (action === "edit") {
+        const newText = prompt("Edit message:");
+        if (newText) {
+            socket.emit("edit_message", {
+                id: contextTargetId,
+                text: newText
+            });
+        }
+    }
+
+    if (action === "delete") {
+        if (confirm("Delete this message?")) {
+            socket.emit("delete_message", contextTargetId);
+        }
+    }
+
+    contextMenu.classList.remove("visible");
+});
+
+document.getElementById("message").addEventListener("contextmenu", e => {
+    e.stopPropagation(); // allow default menu
+}, true);
+
+
+
     
 
     
