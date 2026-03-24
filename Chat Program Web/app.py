@@ -1,0 +1,296 @@
+import json
+import os
+from flask import Flask, render_template, request
+from flask_socketio import SocketIO, join_room, leave_room, emit
+from datetime import datetime
+
+
+# ----------------------------------------
+# Flask + Socket.IO Setup
+# ----------------------------------------
+
+app = Flask(__name__)
+app.config["SECRET_KEY"] = "secret!"  # Required for Socket.IO sessions
+socketio = SocketIO(app)
+
+# ----------------------------------------
+# Data Structures
+# ----------------------------------------
+
+# Maps each connected client's Socket.IO session ID (sid)
+# to their username and current room.
+users = {}  # Example: { "sid123": {"username": "Alex", "room": "lobby"} }
+
+# Stores available rooms and their descriptions.
+rooms = {
+    "lobby": "Default room for new users"
+}
+
+# ----------------------------------------
+# Flask Route (serves the webpage)
+# ----------------------------------------
+
+@app.route("/")
+def index():
+    return render_template("index.html")
+
+
+# ----------------------------------------
+# Helper Functions
+# ----------------------------------------
+
+def send_system(room, text, include_self=False):
+    """
+    Sends a system message to everyone in a room.
+    System messages are styled differently on the client.
+    """
+    emit("system_message", text, room=room, include_self=include_self)
+
+
+def send_chat(room, text):
+    """
+    Sends a normal chat message to everyone in a room.
+    """
+    emit("chat_message", text, room=room)
+
+
+def timestamp():
+    """
+    Returns a HH:MM timestamp string for messages.
+    """
+    return datetime.now().strftime("%H:%M")
+
+
+def send_user_list(room):
+    """
+    Sends an updated list of usernames in a room.
+    The client uses this to update the sidebar.
+    """
+    users_in_room = [
+        users[sid]["username"]
+        for sid in users
+        if users[sid]["room"] == room
+    ]
+    emit("user_list", users_in_room, room=room)
+
+
+def send_room_list():
+    """
+    Sends a list of all rooms to all clients.
+    Used to update the room list in the sidebar.
+    """
+    emit("room_list", list(rooms.keys()), broadcast=True)
+
+
+def move_user_to_room(sid, new_room):
+    """
+    Moves a user from their current room to a new room.
+    Handles:
+    - Leaving old room
+    - Joining new room
+    - Announcing movement
+    - Updating room lists
+    """
+    user = users[sid]
+    old_room = user["room"]
+
+    # Leave old room and join new one
+    leave_room(old_room)
+    join_room(new_room)
+
+    # Update user state
+    user["room"] = new_room
+    rooms.setdefault(new_room, "No description")
+
+    # Announce movement
+    send_system(old_room, f"{user['username']} left the room.")
+    send_system(new_room, f"{user['username']} joined the room.", include_self=False)
+
+    # Notify the user
+    emit("system_message", f"You joined {new_room}.", room=sid)
+
+HISTORY_FILE = "chat_history.json"
+
+
+def load_history():
+    """Load chat history from JSON file."""
+    if not os.path.exists(HISTORY_FILE):
+        return {}
+
+    with open(HISTORY_FILE, "r", encoding="utf-8") as f:
+        try:
+            return json.load(f)
+        except json.JSONDecodeError:
+            return {}
+
+
+def save_history(history):
+    """Save chat history to JSON file."""
+    with open(HISTORY_FILE, "w", encoding="utf-8") as f:
+        json.dump(history, f, indent=4)
+
+
+def add_message_to_history(room, message):
+    """Append a message to a room's history."""
+    history = load_history()
+    history.setdefault(room, [])
+    history[room].append(message)
+    save_history(history)
+
+
+def get_room_history(room):
+    """Return the message list for a room."""
+    history = load_history()
+    return history.get(room, [])
+
+
+# ----------------------------------------
+# Command Handling (/join, /rooms, etc.)
+# ----------------------------------------
+
+def handle_command(sid, text):
+    """
+    Parses and executes slash commands.
+    Supported:
+    /rooms, /join <room>, /leave, /help
+    """
+    user = users[sid]
+    parts = text.split()
+    cmd = parts[0]
+    args = parts[1:]
+
+    if cmd == "/rooms":
+        room_list = "\n".join([f"- {r}: {d}" for r, d in rooms.items()])
+        emit("system_message", f"Available rooms:\n{room_list}", room=sid)
+
+    elif cmd == "/join":
+        if len(args) < 1:
+            emit("system_message", "Usage: /join <room>", room=sid)
+            return
+        move_user_to_room(sid, args[0])
+
+    elif cmd == "/leave":
+        move_user_to_room(sid, "lobby")
+
+    elif cmd == "/help":
+        help_text = (
+            "Commands:\n"
+            "/rooms - List rooms\n"
+            "/join <room> - Join or create a room\n"
+            "/leave - Return to lobby\n"
+            "/help - Show this help"
+        )
+        emit("system_message", help_text, room=sid)
+
+    else:
+        emit("system_message", "Unknown command. Type /help", room=sid)
+
+
+# ----------------------------------------
+# Socket.IO Event Handlers
+# ----------------------------------------
+
+@socketio.on("join")
+def handle_join(data):
+    username = data.get("username")
+    room = "lobby"
+
+    users[request.sid] = {"username": username, "room": room}
+    join_room(room)
+
+    # Send chat history to the new user
+    emit("history", get_room_history(room), room=request.sid)
+
+    send_system(room, f"{username} joined the lobby.", include_self=False)
+    emit("system_message", f"You joined {room}.", room=request.sid)
+
+    send_user_list(room)
+    send_room_list()
+
+@socketio.on("message")
+def handle_message(text):
+    sid = request.sid
+    user = users[sid]
+
+    if text.startswith("/"):
+        handle_command(sid, text)
+        return
+
+    formatted = f"[{timestamp()}] {user['username']}: {text}"
+
+    # Save to history
+    add_message_to_history(user["room"], formatted)
+
+    # Send to room
+    send_chat(user["room"], formatted)
+
+
+
+@socketio.on("change_room")
+def handle_change_room(data):
+    new_room = data.get("room", "lobby")
+    sid = request.sid
+    user = users[sid]
+    old_room = user["room"]
+
+    move_user_to_room(sid, new_room)
+
+    # Send history of the new room
+    emit("history", get_room_history(new_room), room=sid)
+
+    send_user_list(old_room)
+    send_user_list(new_room)
+    send_room_list()
+
+
+
+@socketio.on("disconnect")
+def handle_disconnect():
+    """
+    Fired when a user closes the tab or loses connection.
+    Removes them from the server and updates lists.
+    """
+    user = users.pop(request.sid, None)
+    if not user:
+        return
+
+    room = user["room"]
+    send_system(room, f"{user['username']} disconnected.")
+    send_user_list(room)
+    send_room_list()
+
+
+# ----------------------------------------
+# Typing Indicators
+# ----------------------------------------
+
+@socketio.on("typing")
+def handle_typing():
+    """
+    Fired when a user starts typing.
+    Notifies others in the same room.
+    """
+    sid = request.sid
+    user = users[sid]
+    room = user["room"]
+    emit("typing", user["username"], room=room, include_self=False)
+
+@socketio.on("stop_typing")
+def handle_stop_typing():
+    """
+    Fired when a user stops typing.
+    Removes the typing indicator for others.
+    """
+    sid = request.sid
+    user = users[sid]
+    room = user["room"]
+    emit("stop_typing", user["username"], room=room, include_self=False)
+
+
+# ----------------------------------------
+# Server Startup
+# ----------------------------------------
+
+if __name__ == "__main__":
+    # host="0.0.0.0" allows LAN access
+    socketio.run(app, host="0.0.0.0", port=5000, debug=True)
