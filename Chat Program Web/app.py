@@ -1,7 +1,6 @@
 import json
 import os
-import json
-import os
+import uuid
 
 from cryptography.fernet import Fernet
 from flask import Flask, render_template, request
@@ -141,24 +140,27 @@ def load_history():
             return {}
 
     history = {}
+
     for room, messages in encrypted.items():
         decrypted_msgs = []
         for token in messages:
             try:
-                decrypted = fernet.decrypt(token.encode()).decode()
-                decrypted_msgs.append(decrypted)
+                decrypted_json = fernet.decrypt(token.encode()).decode()
+                decrypted_msgs.append(json.loads(decrypted_json))
             except Exception:
                 continue
         history[room] = decrypted_msgs
 
     return history
 
+
 def save_history(history):
     """Encrypt and save chat history to JSON file."""
     encrypted = {}
+
     for room, messages in history.items():
         encrypted[room] = [
-            fernet.encrypt(m.encode()).decode()
+            fernet.encrypt(json.dumps(m).encode()).decode()
             for m in messages
         ]
 
@@ -178,6 +180,7 @@ def get_room_history(room):
     """Return decrypted message list for a room."""
     history = load_history()
     return history.get(room, [])
+
 
 
 
@@ -253,15 +256,17 @@ def handle_message(text):
         handle_command(sid, text)
         return
 
-    formatted = f"[{timestamp()}] {user['username']}: {text}"
+    msg = {
+    "id": str(uuid.uuid4()),
+    "text": f"[{timestamp()}] {user['username']}: {text}",
+    "username": user["username"]
+    }
 
     # Save to history
-    add_message_to_history(user["room"], formatted)
+    add_message_to_history(user["room"], msg)
 
     # Send to room
-    send_chat(user["room"], formatted)
-
-
+    emit("chat_message", msg, room=user["room"])
 
 @socketio.on("change_room")
 def handle_change_room(data):
@@ -295,6 +300,36 @@ def handle_disconnect():
     send_system(room, f"{user['username']} disconnected.")
     send_user_list(room)
     send_room_list()
+
+@socketio.on("edit_message")
+def handle_edit(data):
+    msg_id = data["id"]
+    new_text = data["text"]
+
+    history = load_history()
+
+    # Update message in history
+    for room, messages in history.items():
+        for msg in messages:
+            if msg.get("id") == msg_id:
+                # Preserve timestamp + username prefix
+                prefix = msg["text"].split(":", 1)[0] + ": "
+                msg["text"] = prefix + new_text
+                save_history(history)
+                break
+
+    emit("edit_message", data, broadcast=True)
+
+@socketio.on("delete_message")
+def handle_delete(msg_id):
+    history = load_history()
+
+    for room, messages in history.items():
+        history[room] = [m for m in messages if m.get("id") != msg_id]
+
+    save_history(history)
+
+    emit("delete_message", msg_id, broadcast=True)
 
 
 # ----------------------------------------

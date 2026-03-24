@@ -126,3 +126,13 @@
     .message {
         animation: slideUp 0.25s ease-out;
     }
+
+    #chat div {
+    padding: 10px 12px;
+    border-bottom: 1px solid #2a2a2a;
+    transition: background 0.2s;
+    }
+
+    #chat div:hover {
+        background: #252525;
+    }
