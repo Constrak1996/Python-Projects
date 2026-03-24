@@ -4,11 +4,17 @@ const socket = io();
         function addLine(text, cls="") {
             const chat = document.getElementById("chat");
             const div = document.createElement("div");
+
+            // Add animation class
+            div.classList.add("message");
+
             if (cls) div.classList.add(cls);
             div.innerHTML = text;
+
             chat.appendChild(div);
             chat.scrollTop = chat.scrollHeight;
         }
+
 
         function colorForName(name) {
             let hash = 0;
