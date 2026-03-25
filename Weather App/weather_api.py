@@ -5,8 +5,7 @@ It is responsible only for fetching and returning weather data.
 """
 
 import requests
-from settings import API_KEY, WEATHER_API_URL
-
+from settings import API_KEY, WEATHER_API_URL, FORECAST_API_URL
 
 def fetch_weather_for_city(city_name: str):
     """
@@ -28,4 +27,18 @@ def fetch_weather_for_city(city_name: str):
     response = requests.get(WEATHER_API_URL, params=parameters)
 
     # Return both the JSON data and the status code.
+    return response.json(), response.status_code
+
+def fetch_five_day_forecast(city_name: str):
+    """
+    Fetches 5-day forecast data for a given city.
+    Returns (response_data, status_code).
+    """
+    parameters = {
+        "q": city_name,
+        "appid": API_KEY,
+        "units": "metric"
+    }
+
+    response = requests.get(FORECAST_API_URL, params=parameters)
     return response.json(), response.status_code

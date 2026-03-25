@@ -17,6 +17,9 @@ API_KEY = "838a986f566a90a67f6791417b4c9b13"
 # Base URL for the OpenWeatherMap current weather endpoint.
 WEATHER_API_URL = "https://api.openweathermap.org/data/2.5/weather"
 
+FORECAST_API_URL = "https://api.openweathermap.org/data/2.5/forecast"
+
+
 
 # -----------------------------
 # APPLICATION SETTINGS
@@ -53,5 +56,5 @@ DANISH_CITIES = [
     "Randers", "Kolding", "Horsens", "Vejle", "Roskilde",
     "Herning", "Hørsholm", "Helsingør", "Silkeborg", "Næstved",
     "Fredericia", "Viborg", "Køge", "Holstebro", "Taastrup",
-    "Slagelse", "Hillerød", "Sønderborg", "Svendborg", "Holbæk"
+    "Slagelse", "Hillerød", "Sønderborg", "Svendborg", "Holbæk", "Ikast"
 ]
