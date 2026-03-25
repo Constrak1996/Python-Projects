@@ -1,28 +1,85 @@
 """
 app.py
-This is the main entry point for the Weather App.
-It sets up the graphical user interface, connects to the weather API,
-and displays the results with icons.
+Main entry point for the Weather App.
+Organized into clear sections so each tab is built in its own function.
 """
 
 import ttkbootstrap as ttkbootstrap
 from ttkbootstrap.constants import PRIMARY
+
 from settings import (
     APPLICATION_THEME,
     WINDOW_WIDTH,
     WINDOW_HEIGHT,
     DANISH_CITIES,
 )
-from weather_api import fetch_weather_for_city, fetch_five_day_forecast
+
+from weather_api import (
+    fetch_weather_for_city,
+    fetch_five_day_forecast,
+    extract_daily_forecasts
+)
+
 from icons import load_weather_icons, choose_icon_for_description
 from utils import convert_degrees_to_compass_direction, convert_unix_to_time_string
 
 
+# ---------------------------------------------------------
+#  FORECAST CARD CREATION
+# ---------------------------------------------------------
+
+def create_forecast_card(parent, date_text, description_text, temperature_value, icon_image):
+    """
+    Creates a styled forecast card containing the date, icon, description, and temperature.
+    """
+
+    card = ttkbootstrap.Frame(
+        master=parent,
+        padding=10,
+        bootstyle="secondary"
+    )
+    card.pack(fill="x", pady=5)
+
+    date_label = ttkbootstrap.Label(
+        master=card,
+        text=date_text,
+        font=("Arial", 14, "bold")
+    )
+    date_label.pack(anchor="w")
+
+    row_frame = ttkbootstrap.Frame(master=card)
+    row_frame.pack(anchor="w", pady=5)
+
+    icon_label = ttkbootstrap.Label(master=row_frame, image=icon_image)
+    icon_label.image = icon_image
+    icon_label.pack(side="left", padx=5)
+
+    description_label = ttkbootstrap.Label(
+        master=row_frame,
+        text=description_text.capitalize(),
+        font=("Arial", 12)
+    )
+    description_label.pack(side="left")
+
+    temperature_label = ttkbootstrap.Label(
+        master=card,
+        text=f"{temperature_value}°C",
+        font=("Arial", 12)
+    )
+    temperature_label.pack(anchor="w")
+
+    return card
+
+
+# ---------------------------------------------------------
+#  CURRENT WEATHER LOGIC
+# ---------------------------------------------------------
+
 def get_weather_and_update_interface():
     """
-    Fetches weather data for the selected city and updates the user interface
-    with the weather information and the appropriate icon.
+    Fetches weather data for the selected city and updates the user interface.
     """
+
     selected_city_name = city_combobox.get()
 
     if not selected_city_name or selected_city_name == "Select a city":
@@ -38,7 +95,6 @@ def get_weather_and_update_interface():
         weather_icon_label.config(image="")
         return
 
-    # Extract weather information
     weather_description = response_data["weather"][0]["description"]
     temperature = response_data["main"]["temp"]
     feels_like_temperature = response_data["main"]["feels_like"]
@@ -49,12 +105,9 @@ def get_weather_and_update_interface():
     wind_gust_speed = response_data["wind"].get("gust", None)
     pressure_hpa = response_data["main"]["pressure"]
 
-    sunrise_unix = response_data["sys"]["sunrise"]
-    sunset_unix = response_data["sys"]["sunset"]
-    sunrise_time = convert_unix_to_time_string(sunrise_unix)
-    sunset_time = convert_unix_to_time_string(sunset_unix)
+    sunrise_time = convert_unix_to_time_string(response_data["sys"]["sunrise"])
+    sunset_time = convert_unix_to_time_string(response_data["sys"]["sunset"])
 
-    # Build weather text
     weather_text = (
         f"{selected_city_name}\n"
         f"{weather_description.capitalize()}\n"
@@ -77,43 +130,118 @@ def get_weather_and_update_interface():
     weather_icon_label.image = chosen_icon
 
 
+# ---------------------------------------------------------
+#  FORECAST LOGIC
+# ---------------------------------------------------------
+
 def update_five_day_forecast():
     """
-    Loads and displays the 5-day forecast for the selected city.
+    Loads and displays the 5-day forecast using styled cards.
     """
+
     selected_city_name = city_combobox.get()
 
     if not selected_city_name or selected_city_name == "Select a city":
-        forecast_label.config(text="Please select a city.")
         return
 
     response_data, status_code = fetch_five_day_forecast(selected_city_name)
 
     if status_code != 200:
-        forecast_label.config(text="Could not load forecast.")
         return
 
-    forecast_text = ""
+    for widget in forecast_cards_frame.winfo_children():
+        widget.destroy()
 
-    for entry in response_data["list"]:
-        if "12:00" in entry["dt_txt"]:
-            date = entry["dt_txt"].split(" ")[0]
-            description = entry["weather"][0]["description"]
-            temperature = entry["main"]["temp"]
+    daily_forecasts = extract_daily_forecasts(response_data)
 
-            forecast_text += f"{date} - {description.capitalize()}, {temperature}°C\n"
+    for day in daily_forecasts:
+        icon_image = choose_icon_for_description(day["description"], weather_icon_dictionary)
 
-    forecast_label.config(text=forecast_text)
+        create_forecast_card(
+            parent=forecast_cards_frame,
+            date_text=day["date"],
+            description_text=day["description"],
+            temperature_value=day["temperature"],
+            icon_image=icon_image
+        )
 
 
-# -----------------------------
-# APPLICATION SETUP
-# -----------------------------
+# ---------------------------------------------------------
+#  TAB BUILDERS
+# ---------------------------------------------------------
+
+def build_current_weather_tab(parent):
+    """
+    Builds the entire Current Weather tab.
+    """
+
+    global city_combobox, weather_icon_label, weather_result_label
+
+    title_label = ttkbootstrap.Label(
+        master=parent,
+        text="Weather App",
+        font=("Arial", 18)
+    )
+    title_label.pack(pady=10)
+
+    city_combobox = ttkbootstrap.Combobox(
+        master=parent,
+        values=DANISH_CITIES,
+        state="readonly",
+        width=27
+    )
+    city_combobox.pack(pady=5)
+    city_combobox.set("Select a city")
+
+    get_weather_button = ttkbootstrap.Button(
+        master=parent,
+        text="Get Weather",
+        bootstyle=PRIMARY,
+        command=get_weather_and_update_interface
+    )
+    get_weather_button.pack(pady=10)
+
+    weather_icon_label = ttkbootstrap.Label(master=parent)
+    weather_icon_label.pack(pady=5)
+
+    weather_result_label = ttkbootstrap.Label(
+        master=parent,
+        text="",
+        font=("Arial", 12),
+        justify="center"
+    )
+    weather_result_label.pack(pady=10)
+
+
+def build_forecast_tab(parent):
+    """
+    Builds the entire 5-Day Forecast tab.
+    """
+
+    global forecast_cards_frame
+
+    forecast_button = ttkbootstrap.Button(
+        master=parent,
+        text="Load Forecast",
+        bootstyle=PRIMARY,
+        command=update_five_day_forecast
+    )
+    forecast_button.pack(pady=5)
+
+    forecast_cards_frame = ttkbootstrap.Frame(master=parent)
+    forecast_cards_frame.pack(fill="both", expand=True, pady=5)
+
+
+# ---------------------------------------------------------
+#  MAIN WINDOW SETUP
+# ---------------------------------------------------------
+
 application_window = ttkbootstrap.Window(themename=APPLICATION_THEME)
 application_window.title("Weather App")
 application_window.geometry(f"{WINDOW_WIDTH}x{WINDOW_HEIGHT}")
 
-# Notebook (tabs)
+weather_icon_dictionary = load_weather_icons()
+
 notebook = ttkbootstrap.Notebook(application_window)
 notebook.pack(fill="both", expand=True)
 
@@ -123,61 +251,7 @@ forecast_tab = ttkbootstrap.Frame(notebook)
 notebook.add(current_weather_tab, text="Current Weather")
 notebook.add(forecast_tab, text="5-Day Forecast")
 
-# Load icons
-weather_icon_dictionary = load_weather_icons()
+build_current_weather_tab(current_weather_tab)
+build_forecast_tab(forecast_tab)
 
-# CURRENT WEATHER TAB UI
-title_label = ttkbootstrap.Label(
-    master=current_weather_tab,
-    text="Weather App",
-    font=("Arial", 18)
-)
-title_label.pack(pady=10)
-
-city_combobox = ttkbootstrap.Combobox(
-    master=current_weather_tab,
-    values=DANISH_CITIES,
-    state="readonly",
-    width=27
-)
-city_combobox.pack(pady=5)
-city_combobox.set("Select a city")
-
-get_weather_button = ttkbootstrap.Button(
-    master=current_weather_tab,
-    text="Get Weather",
-    bootstyle=PRIMARY,
-    command=get_weather_and_update_interface
-)
-get_weather_button.pack(pady=10)
-
-weather_icon_label = ttkbootstrap.Label(master=current_weather_tab)
-weather_icon_label.pack(pady=5)
-
-weather_result_label = ttkbootstrap.Label(
-    master=current_weather_tab,
-    text="",
-    font=("Arial", 12),
-    justify="center"
-)
-weather_result_label.pack(pady=10)
-
-# FORECAST TAB UI
-forecast_button = ttkbootstrap.Button(
-    master=forecast_tab,
-    text="Load Forecast",
-    bootstyle=PRIMARY,
-    command=update_five_day_forecast
-)
-forecast_button.pack(pady=10)
-
-forecast_label = ttkbootstrap.Label(
-    master=forecast_tab,
-    text="",
-    font=("Arial", 12),
-    justify="left"
-)
-forecast_label.pack(pady=10)
-
-# Start the application
 application_window.mainloop()

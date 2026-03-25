@@ -56,5 +56,5 @@ DANISH_CITIES = [
     "Randers", "Kolding", "Horsens", "Vejle", "Roskilde",
     "Herning", "Hørsholm", "Helsingør", "Silkeborg", "Næstved",
     "Fredericia", "Viborg", "Køge", "Holstebro", "Taastrup",
-    "Slagelse", "Hillerød", "Sønderborg", "Svendborg", "Holbæk", "Ikast"
+    "Slagelse", "Hillerød", "Sønderborg", "Svendborg", "Holbæk", "Ikast", "Bording"
 ]

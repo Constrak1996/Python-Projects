@@ -42,3 +42,21 @@ def fetch_five_day_forecast(city_name: str):
 
     response = requests.get(FORECAST_API_URL, params=parameters)
     return response.json(), response.status_code
+
+def extract_daily_forecasts(forecast_data: dict):
+    """
+    Extracts one forecast per day (the 12:00 entry) from the 5-day forecast data.
+    Returns a list of dictionaries with date, description, temperature, and icon code.
+    """
+    daily_entries = []
+
+    for entry in forecast_data["list"]:
+        if "12:00" in entry["dt_txt"]:
+            daily_entries.append({
+                "date": entry["dt_txt"].split(" ")[0],
+                "description": entry["weather"][0]["description"],
+                "temperature": entry["main"]["temp"],
+                "icon_code": entry["weather"][0]["icon"]
+            })
+
+    return daily_entries
