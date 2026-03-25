@@ -22,6 +22,7 @@ from weather_api import (
 
 from icons import load_weather_icons, choose_icon_for_description
 from utils import convert_degrees_to_compass_direction, convert_unix_to_time_string
+from user_settings import load_user_settings, save_user_settings
 
 
 # ---------------------------------------------------------
@@ -171,13 +172,19 @@ def update_five_day_forecast():
 # ---------------------------------------------------------
 def apply_settings():
     """
-    Applies the selected settings, such as theme changes.
+    Applies the selected settings, such as theme changes,
+    and saves them permanently to the settings file.
     """
 
     selected_theme = theme_combobox.get()
 
-    # Change the theme of the entire application window
+    # Apply theme immediately
     application_window.style.theme_use(selected_theme)
+
+    # Save settings to JSON
+    user_settings["theme"] = selected_theme
+    save_user_settings(user_settings)
+
 
 def build_current_weather_tab(parent):
     """
@@ -268,7 +275,7 @@ def build_settings_tab(parent):
         width=20
     )
     theme_combobox.pack(pady=5, padx=10)
-    theme_combobox.set(APPLICATION_THEME)
+    theme_combobox.set(user_settings["theme"])
 
     save_button = ttkbootstrap.Button(
         master=parent,
@@ -276,14 +283,17 @@ def build_settings_tab(parent):
         bootstyle=PRIMARY,
         command=apply_settings
     )
+
     save_button.pack(pady=20)
 
 
 # ---------------------------------------------------------
 #  MAIN WINDOW SETUP
 # ---------------------------------------------------------
+user_settings = load_user_settings()
 
-application_window = ttkbootstrap.Window(themename=APPLICATION_THEME)
+application_window = ttkbootstrap.Window(themename=user_settings["theme"])
+
 application_window.title("Weather App")
 application_window.geometry(f"{WINDOW_WIDTH}x{WINDOW_HEIGHT}")
 
