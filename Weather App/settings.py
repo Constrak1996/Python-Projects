@@ -5,6 +5,7 @@ It keeps all settings in one place so the rest of the code stays clean.
 """
 
 import os
+from secret_key import API_KEY
 
 # -----------------------------
 # API SETTINGS
@@ -12,7 +13,6 @@ import os
 
 # Your OpenWeatherMap API key.
 # Replace this with your real key.
-API_KEY = "838a986f566a90a67f6791417b4c9b13"
 
 # Base URL for the OpenWeatherMap current weather endpoint.
 WEATHER_API_URL = "https://api.openweathermap.org/data/2.5/weather"
