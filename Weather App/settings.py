@@ -31,8 +31,8 @@ FORECAST_API_URL = "https://api.openweathermap.org/data/2.5/forecast"
 APPLICATION_THEME = "darkly"
 
 # Default window size for the application.
-WINDOW_WIDTH = 350
-WINDOW_HEIGHT = 350
+WINDOW_WIDTH = 400
+WINDOW_HEIGHT = 500
 
 
 # -----------------------------
