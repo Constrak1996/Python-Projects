@@ -169,6 +169,15 @@ def update_five_day_forecast():
 # ---------------------------------------------------------
 #  TAB BUILDERS
 # ---------------------------------------------------------
+def apply_settings():
+    """
+    Applies the selected settings, such as theme changes.
+    """
+
+    selected_theme = theme_combobox.get()
+
+    # Change the theme of the entire application window
+    application_window.style.theme_use(selected_theme)
 
 def build_current_weather_tab(parent):
     """
@@ -231,6 +240,44 @@ def build_forecast_tab(parent):
     forecast_cards_frame = ttkbootstrap.Frame(master=parent)
     forecast_cards_frame.pack(fill="both", expand=True, pady=5)
 
+def build_settings_tab(parent):
+    """
+    Builds the Settings tab where the user can configure application preferences.
+    """
+
+    global theme_combobox
+
+    settings_title_label = ttkbootstrap.Label(
+        master=parent,
+        text="Settings",
+        font=("Arial", 18)
+    )
+    settings_title_label.pack(pady=10)
+
+    theme_label = ttkbootstrap.Label(
+        master=parent,
+        text="Select Theme:",
+        font=("Arial", 12)
+    )
+    theme_label.pack(anchor="w", padx=10)
+
+    theme_combobox = ttkbootstrap.Combobox(
+        master=parent,
+        values=["darkly", "flatly", "superhero", "cyborg", "solar", "morph"],
+        state="readonly",
+        width=20
+    )
+    theme_combobox.pack(pady=5, padx=10)
+    theme_combobox.set(APPLICATION_THEME)
+
+    save_button = ttkbootstrap.Button(
+        master=parent,
+        text="Save Settings",
+        bootstyle=PRIMARY,
+        command=apply_settings
+    )
+    save_button.pack(pady=20)
+
 
 # ---------------------------------------------------------
 #  MAIN WINDOW SETUP
@@ -247,11 +294,14 @@ notebook.pack(fill="both", expand=True)
 
 current_weather_tab = ttkbootstrap.Frame(notebook)
 forecast_tab = ttkbootstrap.Frame(notebook)
+settings_tab = ttkbootstrap.Frame(notebook)
 
 notebook.add(current_weather_tab, text="Current Weather")
 notebook.add(forecast_tab, text="5-Day Forecast")
+notebook.add(settings_tab, text="Settings")
 
 build_current_weather_tab(current_weather_tab)
 build_forecast_tab(forecast_tab)
+build_settings_tab(settings_tab)
 
 application_window.mainloop()
